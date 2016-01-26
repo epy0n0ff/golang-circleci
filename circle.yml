@@ -1,15 +1,26 @@
 # ref environment: https://circleci.com/docs/environment
 machine:
   timezone: Asia/Tokyo
+  environment:
+    GO15VENDOREXPERIMENT: 1
+    VCS : "github.com"
+    REPO_ROOT: "${HOME}/.go_workspace/src/${VCS}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
 
 dependencies:
   pre:
-    - go get github.com/tools/godep
-    - go get github.com/golang/lint
+    - go get -u github.com/tools/godep
+    - go get -u github.com/golang/lint/golint
+
+checkout:
+  post:
+    - rm -rf ${REPO_ROOT}
+    - mkdir -p ${REPO_ROOT}
+    - cp -r ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_workspace/src/${VCS}/${CIRCLE_PROJECT_USERNAME}/
 
 test:
   pre:
-    - for package in `go list ./...| grep -v vendor`; do golint ${package}; done
-    - go vet ./...
+    - cd ${REPO_ROOT} && godep save ./...
+    - cd ${REPO_ROOT} && for package in `go list ./...| grep -v vendor`; do golint ${package}; done
+    - cd ${REPO_ROOT} && go vet ./...
   override:
-    - go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
+    - cd ${REPO_ROOT} && godep go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
