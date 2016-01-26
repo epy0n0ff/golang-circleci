@@ -1,0 +1,15 @@
+# ref environment: https://circleci.com/docs/environment
+machine:
+  timezone: Asia/Tokyo
+
+dependencies:
+  pre:
+    - go get github.com/tools/godep
+    - go get github.com/golang/lint
+
+test:
+  pre:
+    - for package in `go list ./...| grep -v vendor`; do golint ${package}; done
+    - go vet ./...
+  override:
+    - go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
