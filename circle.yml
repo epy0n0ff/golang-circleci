@@ -3,24 +3,21 @@ machine:
   timezone: Asia/Tokyo
   environment:
     GO15VENDOREXPERIMENT: 1
-    VCS : "github.com"
-    REPO_ROOT: "${HOME}/.go_workspace/src/${VCS}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+    VCS: "github.com"
+    COPY_PATH: "${HOME}/.go_workspace/src/${VCS}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+  post:
+    - mkdir -p ${COPY_PATH}
 
 dependencies:
   pre:
     - go get -u github.com/tools/godep
     - go get -u github.com/golang/lint/golint
 
-checkout:
-  post:
-    - rm -rf ${REPO_ROOT}
-    - mkdir -p ${REPO_ROOT}
-    - cp -r ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_workspace/src/${VCS}/${CIRCLE_PROJECT_USERNAME}/
-
 test:
   pre:
-    - cd ${REPO_ROOT} && godep save ./...
-    - cd ${REPO_ROOT} && for package in `go list ./...| grep -v vendor`; do golint ${package}; done
-    - cd ${REPO_ROOT} && go vet ./...
+    - cp -rf ./ ${COPY_PATH}
+    - godep restore
+    - for package in `go list ./...| grep -v vendor`; do golint ${package}; done
+    - go vet `go list ./...| grep -v vendor`
   override:
-    - cd ${REPO_ROOT} && godep go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
+    - godep go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
