@@ -17,7 +17,7 @@ test:
   pre:
     - cp -rf ./ ${COPY_PATH}
     - godep restore
-    - for package in `go list ./...| grep -v vendor`; do golint ${package}; done
-    - go vet `go list ./...| grep -v vendor`
+    - golint ./...
+    - go vet ./...
   override:
-    - godep go test -cover -bench -benchmem `go list ./... | grep -v /vendor/` -v
+    - godep go test -cover -bench -benchmem ./... -v
